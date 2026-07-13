@@ -1,0 +1,89 @@
+/* Theme Toggle */
+.switch {
+  position:        relative;
+  display:         inline-flex;
+  align-items:     center;
+  justify-content: space-between;
+  width:           62px;
+  height:          32px;
+  background:      var(--border);
+  border:          2px solid var(--border-strong);
+  border-radius:   9999px;
+  cursor:          pointer;
+  padding:         3px;
+  transition:
+    background-color var(--transition-base),
+    border-color     var(--transition-base),
+    box-shadow       var(--transition-base);
+
+  &:hover {
+    border-color: var(--primary);
+    box-shadow:   0 0 8px rgba(31, 105, 255, 0.25);
+  }
+}
+
+.switch-track {
+  display:         flex;
+  width:           100%;
+  height:          100%;
+  align-items:     center;
+  justify-content: space-between;
+  padding:         0 4px;
+}
+
+.switch-icon-bg {
+  display:     flex;
+  align-items: center;
+  justify-content: center;
+  color:       var(--foreground-muted);
+  opacity:     0.5;
+  transition:  opacity var(--transition-base), color var(--transition-base);
+  z-index:     1;
+}
+
+.switch.is-left .left-icon {
+  color:   #d97706;
+  opacity: 1;
+}
+
+.switch.is-right .right-icon {
+  color:   #a78bfa;
+  opacity: 1;
+}
+
+.switch-thumb {
+  position:         absolute;
+  left:             3px;
+  display:          flex;
+  align-items:      center;
+  justify-content:  center;
+  width:            22px;
+  height:           22px;
+  border-radius:    50%;
+  background:       var(--bg-elevated);
+  border:           1px solid var(--border-strong);
+  box-shadow:       var(--shadow-sm);
+  transition:
+    transform         var(--transition-base),
+    background-color  var(--transition-base),
+    border-color      var(--transition-base);
+  z-index: 2;
+}
+
+.switch.is-right .switch-thumb {
+  transform: translateX(30px);
+}
+
+.switch-icon {
+  transition: transform var(--transition-base), color var(--transition-base);
+}
+
+.switch.is-left .switch-thumb .switch-icon {
+  color:     #f59e0b;
+  transform: rotate(0deg);
+}
+
+.switch.is-right .switch-thumb .switch-icon {
+  color:     #a78bfa;
+  transform: rotate(360deg);
+}

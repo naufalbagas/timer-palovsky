@@ -1,0 +1,42 @@
+/* Support Button */
+.solid-btn {
+  display:         inline-flex;
+  align-items:     center;
+  justify-content: flex-start;
+  gap:             var(--space-2);
+  padding:         10px 22px;
+  font-family:     var(--font-mono);
+  font-size:       var(--text-sm);
+  font-weight:     700;
+  color:           #ffffff !important;
+  background:      var(--primary);
+  border:          none;
+  border-bottom:   5px solid rgba(0, 0, 0, 0.2);
+  border-radius:   var(--radius-md);
+  cursor:          pointer;
+  position:        relative;
+  overflow:        hidden;
+  box-shadow:      0 3px 0 rgba(0, 0, 0, 0.15), 0 4px 12px rgba(31, 105, 255, 0.2);
+  transition:      all var(--transition-base);
+  width:           100%;
+
+  &:hover {
+    transform:  translateY(-2px);
+  }
+
+  &:active {
+    transform:     translateY(1px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow:    0 1px 0 rgba(0, 0, 0, 0.15), 0 2px 6px rgba(31, 105, 255, 0.2);
+  }
+
+  & .icon {
+    transition: transform var(--transition-fast), color var(--transition-fast);
+  }
+
+  &:hover .icon {
+    transform: scale(1.2);
+    color:     #f43f5e;
+    animation: heartBeat 0.6s infinite alternate ease-in-out;
+  }
+}

@@ -1,0 +1,135 @@
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap");
+
+/* =========================================================
+   DESIGN TOKENS — CSS Custom Properties
+   ========================================================= */
+:root {
+  /* Radius */
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   16px;
+  --radius-full: 9999px;
+
+  /* Space */
+  --space-1:  0.25rem;
+  --space-2:  0.5rem;
+  --space-3:  0.75rem;
+  --space-4:  1rem;
+  --space-5:  1.5rem;
+  --space-6:  2rem;
+  --space-8:  3rem;
+  --space-10: 4rem;
+
+  /* Typography */
+  --font-mono:  "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --text-xs:    0.75rem;
+  --text-sm:    0.875rem;
+  --text-base:  1rem;
+  --text-lg:    1.125rem;
+  --text-xl:    1.25rem;
+  --text-2xl:   1.5rem;
+  --text-3xl:   1.875rem;
+
+  /* Container */
+  --container-max:     1280px;
+  --container-padding: var(--space-4);
+
+  /* Z-levels */
+  --z-dropdown:       1000;
+  --z-sticky:         1100;
+  --z-fixed:          1200;
+  --z-modal-backdrop: 1300;
+  --z-modal:          1400;
+  --z-popover:        1500;
+  --z-tooltip:        1600;
+
+  /* Transitions */
+  --transition-fast: 120ms ease-in-out;
+  --transition-base: 200ms ease-in-out;
+  --transition-slow: 320ms ease-in-out;
+
+  /* Shadows — light-dark() inline */
+  --shadow-sm: 0 1px 2px light-dark(rgba(0,0,0,.05), rgba(0,0,0,.4));
+  --shadow-md: 0 4px 6px light-dark(rgba(0,0,0,.07), rgba(0,0,0,.5));
+  --shadow-lg: 0 10px 15px light-dark(rgba(0,0,0,.1), rgba(0,0,0,.6));
+
+  /* Colors */
+  --bg:            light-dark(#e1edf8, #060b13);
+  --bg-elevated:   light-dark(#ffffff, #0d1522);
+  --foreground:    light-dark(#232323, #d6d6d6);
+  --foreground-muted: light-dark(#6b7280, #9ca3af);
+
+  --primary:        light-dark(#1f69ff, #5b8dff);
+  --primary-hover:  light-dark(#1854d1, #7da5ff);
+  --primary-darker: light-dark(#184aad, #33529a);
+  --secondary:      light-dark(#f97316, #fb923c);
+  --secondary-hover:   light-dark(#ea6a0c, #fdb874);
+  --secondary-darker:  light-dark(#c2410c, #9a3412);
+
+  --success:      light-dark(#10b981, #34d399);
+  --error:        light-dark(#ef4444, #f87171);
+  --error-hover:  light-dark(#dc2626, #fca5a5);
+  --error-darker: light-dark(#b91c1c, #991b1b);
+  --warning:      light-dark(#f59e0b, #fbbf24);
+  --info:         light-dark(#3b82f6, #60a5fa);
+
+  --border:       light-dark(#e5e7eb, #1f2937);
+  --border-strong: light-dark(#d1d5db, #374151);
+
+  --bg-decor-grad-1:  light-dark(#e4ebf1, #0a142e);
+  --bg-decor-grad-2:  light-dark(#d5e1ed, #102144);
+  --bg-decor-color:   light-dark(#b4c6dc, #243d6c);
+}
+
+:root { color-scheme: light dark; }
+
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }
+
+/* =========================================================
+   BASIC HTML RESETS
+   ========================================================= */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+body {
+  margin:                  0;
+  padding:                 0;
+  min-height:              100vh;
+  background:              var(--bg);
+  color:                   var(--foreground);
+  font-family:             var(--font-mono);
+  font-size:               var(--text-base);
+  line-height:             1.5;
+  -webkit-font-smoothing:  antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering:          optimizeLegibility;
+  position:                relative;
+}
+a {
+  color:           var(--primary);
+  text-decoration: none;
+  transition:      color var(--transition-fast);
+
+  &:hover {
+    color:           var(--primary-hover);
+    text-decoration: underline;
+  }
+}
+code {
+  padding:          0.2rem 0.4rem;
+  background-color: rgba(128, 128, 128, 0.1);
+  border-radius:    var(--radius-sm);
+  font-family:      var(--font-mono);
+  font-size:        0.875em;
+}
+:focus-visible {
+  outline: none;
+}
+.container {
+  margin-inline: auto;
+  padding-inline: var(--container-padding);
+  width:     100%;
+  max-width: var(--container-max);
+  box-sizing: border-box;
+}
