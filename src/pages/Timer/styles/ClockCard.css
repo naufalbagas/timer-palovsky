@@ -100,12 +100,7 @@
   border-bottom: none !important;
   box-shadow: none !important;
 
-  &.tap-enabled {
-    cursor: pointer;
-    touch-action: none;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-  }
+
 
   /* ─── Base layer: timer display ─────────────────────────── */
   & .clock-display-base {
@@ -259,10 +254,11 @@
     }
 
     & .timer-display {
-      pointer-events:    auto;
+      position:          relative;
+      z-index:           1;
+      pointer-events:    none;
       text-align:        center;
       font-variant-numeric: tabular-nums;
-      cursor:            pointer;
       color:             var(--foreground);
 
       &.red   { color: var(--error); }
@@ -282,7 +278,20 @@
       }
     }
 
+    & .timer-tap-zone {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      cursor: pointer;
+      pointer-events: auto;
+      touch-action: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     & .timer-prompts {
+      position:       relative;
+      z-index:        3;
       pointer-events: auto;
       display:        flex;
       gap:            var(--space-3);

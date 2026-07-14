@@ -530,10 +530,6 @@ export default function Timer() {
             setTime(finalElapsedTime);
             setPendingSave(true);
             ignoreKeyUpRef.current = true;
-        } else if (inspectionEnabledRef.current && !isInspectingRef.current) {
-            // Start inspection immediately on press
-            startInspection();
-            ignoreKeyUpRef.current = true;
         } else {
             // If during inspection, DO NOT pause the countdown
             if (isInspectingRef.current && inspectionPenaltyRef.current === "dnf") {
@@ -613,17 +609,12 @@ export default function Timer() {
 
     // --- Pointer Event Handlers (Tap/Click) ---
     const handlePointerDown = (e: React.PointerEvent) => {
-        // Prevent default to avoid simulating click, selecting text, or double-firing
-        // Do not trigger if clicking on actions (like +2, DNF chips)
-        if ((e.target as HTMLElement).closest('.action-chip')) return;
         if (e.button && e.button !== 0) return; // Ignore right-clicks
-        if ((e.target as HTMLElement).closest('.timer-controls')) return; // Ignore inputs if any
         handleTimerPressDown();
     };
 
     const handlePointerUp = (e: React.PointerEvent) => {
-        if ((e.target as HTMLElement).closest('.action-chip')) return;
-        if (e.button && e.button !== 0) return;
+        if (e.button && e.button !== 0) return; // Ignore right-clicks
         handleTimerPressUp();
     };
 
@@ -833,10 +824,6 @@ export default function Timer() {
                 <div className="timer-col-1">
                     <div 
                         className={`timer-card clock-card ${inputMethod === "timer" ? "tap-enabled" : ""}`}
-                        onPointerDown={inputMethod === "timer" ? handlePointerDown : undefined}
-                        onPointerUp={inputMethod === "timer" ? handlePointerUp : undefined}
-                        onPointerLeave={inputMethod === "timer" ? handlePointerUp : undefined}
-                        onPointerCancel={inputMethod === "timer" ? handlePointerUp : undefined}
                     >
                         {/* Z-stack base: timer display fills the full card, perfectly centered */}
                         <div className="clock-display-base">
@@ -864,6 +851,16 @@ export default function Timer() {
                                     </span>
                                 )}
                             </div>
+
+                            {inputMethod === "timer" && (
+                                <div
+                                    className="timer-tap-zone"
+                                    onPointerDown={handlePointerDown}
+                                    onPointerUp={handlePointerUp}
+                                    onPointerLeave={handlePointerUp}
+                                    onPointerCancel={handlePointerUp}
+                                />
+                            )}
 
                             <div className="timer-prompts">
                                 {promptText && (
