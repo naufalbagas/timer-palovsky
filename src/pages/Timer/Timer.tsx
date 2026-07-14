@@ -515,110 +515,117 @@ export default function Timer() {
         }, 1000);
     }, []);
 
-    // --- Timer Logic (Spacebar) ---
-    const handleKeyDown = useCallback((e: KeyboardEvent) => {
-        // Avoid triggering if we're typing in an input
-        if (
-            document.activeElement?.tagName === "INPUT" ||
-            document.activeElement?.tagName === "TEXTAREA"
-        )
-            return;
+    // --- Timer Logic Core ---
+    const handleTimerPressDown = useCallback(() => {
         if (inputMethodRef.current !== "timer") return;
+        spacePressedRef.current = true;
 
-        if (e.code === "Space") {
-            e.preventDefault();
+        if (isRunningRef.current) {
+            // Stop timer
+            setIsRunning(false);
+            if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
 
-            // Prevent repeated keydown firing when holding down
-            if (e.repeat) return;
-            spacePressedRef.current = true;
+            // Set time to final elapsed time and trigger deferred save
+            const finalElapsedTime = Date.now() - startTimeRef.current;
+            setTime(finalElapsedTime);
+            setPendingSave(true);
+            ignoreKeyUpRef.current = true;
+        } else if (inspectionEnabledRef.current && !isInspectingRef.current) {
+            // Start inspection immediately on press
+            startInspection();
+            ignoreKeyUpRef.current = true;
+        } else {
+            // If during inspection, DO NOT pause the countdown
+            if (isInspectingRef.current && inspectionPenaltyRef.current === "dnf") {
+                return;
+            }
+            // Start holding (turn red)
+            setIsHolding(true);
+            setIsReady(false);
+            setShowSolveActions(false);
+            setTime(0);
 
-            if (isRunningRef.current) {
-                // Stop timer
-                setIsRunning(false);
-                if (timerIntervalRef.current)
-                    clearInterval(timerIntervalRef.current);
+            holdTimeoutRef.current = setTimeout(() => {
+                if (spacePressedRef.current) {
+                    setIsHolding(false);
+                    setIsReady(true); // turn green after 1s of holding
+                }
+            }, 1000);
+        }
+    }, [startInspection]);
 
-                // ponytail: Set time to final elapsed time and trigger deferred save to get-text-time from screen
-                const finalElapsedTime = Date.now() - startTimeRef.current;
-                setTime(finalElapsedTime);
-                setPendingSave(true);
+    const handleTimerPressUp = useCallback(() => {
+        if (inputMethodRef.current !== "timer") return;
+        spacePressedRef.current = false;
 
-                ignoreKeyUpRef.current = true;
-            } else if (inspectionEnabledRef.current && !isInspectingRef.current) {
-                // Start inspection immediately on keydown
+        if (holdTimeoutRef.current) {
+            clearTimeout(holdTimeoutRef.current);
+            holdTimeoutRef.current = null;
+        }
+
+        if (ignoreKeyUpRef.current) {
+            ignoreKeyUpRef.current = false;
+            return;
+        }
+
+        if (isHoldingRef.current) {
+            setIsHolding(false); // Released too early
+        } else if (isReadyRef.current) {
+            // Release spacebar when green
+            setIsReady(false);
+            if (inspectionEnabledRef.current && !isInspectingRef.current) {
                 startInspection();
-                ignoreKeyUpRef.current = true;
             } else {
-                // ponytail: if during inspection, DO NOT pause the countdown (countdown keeps running!)
                 if (isInspectingRef.current && inspectionPenaltyRef.current === "dnf") {
                     return;
                 }
-
-                // Start holding (turn red)
-                setIsHolding(true);
-                setIsReady(false);
-                setShowSolveActions(false);
-                setTime(0);
-
-                holdTimeoutRef.current = setTimeout(() => {
-                    if (spacePressedRef.current) {
-                        setIsHolding(false);
-                        setIsReady(true); // turn green after 1s of holding
-                    }
-                }, 1000);
+                if (inspectionIntervalRef.current) {
+                    clearInterval(inspectionIntervalRef.current);
+                    inspectionIntervalRef.current = null;
+                }
+                setIsInspecting(false);
+                setIsRunning(true);
+                startTimeRef.current = Date.now();
+                timerIntervalRef.current = setInterval(() => {
+                    setTime(Date.now() - startTimeRef.current);
+                }, 10);
             }
         }
     }, [startInspection]);
 
-    const handleKeyUp = useCallback((e: KeyboardEvent) => {
-        if (
-            document.activeElement?.tagName === "INPUT" ||
-            document.activeElement?.tagName === "TEXTAREA"
-        )
-            return;
-        if (inputMethodRef.current !== "timer") return;
-
+    // --- Keyboard Event Handlers ---
+    const handleKeyDown = useCallback((e: KeyboardEvent) => {
+        if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
         if (e.code === "Space") {
             e.preventDefault();
-            spacePressedRef.current = false;
-
-            if (holdTimeoutRef.current) {
-                clearTimeout(holdTimeoutRef.current);
-                holdTimeoutRef.current = null;
-            }
-
-            if (ignoreKeyUpRef.current) {
-                ignoreKeyUpRef.current = false;
-                return;
-            }
-
-            if (isHoldingRef.current) {
-                setIsHolding(false); // Released too early
-            } else if (isReadyRef.current) {
-                // Release spacebar when green
-                setIsReady(false);
-                if (inspectionEnabledRef.current && !isInspectingRef.current) {
-                    // ponytail: start WCA 15s inspection phase
-                    startInspection();
-                } else {
-                    // ponytail: start the actual solve timer
-                    if (isInspectingRef.current && inspectionPenaltyRef.current === "dnf") {
-                        return;
-                    }
-                    if (inspectionIntervalRef.current) {
-                        clearInterval(inspectionIntervalRef.current);
-                        inspectionIntervalRef.current = null;
-                    }
-                    setIsInspecting(false);
-                    setIsRunning(true);
-                    startTimeRef.current = Date.now();
-                    timerIntervalRef.current = setInterval(() => {
-                        setTime(Date.now() - startTimeRef.current);
-                    }, 10);
-                }
-            }
+            if (e.repeat) return; // Prevent repeated keydown firing when holding down
+            handleTimerPressDown();
         }
-    }, [startInspection]);
+    }, [handleTimerPressDown]);
+
+    const handleKeyUp = useCallback((e: KeyboardEvent) => {
+        if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
+        if (e.code === "Space") {
+            e.preventDefault();
+            handleTimerPressUp();
+        }
+    }, [handleTimerPressUp]);
+
+    // --- Pointer Event Handlers (Tap/Click) ---
+    const handlePointerDown = (e: React.PointerEvent) => {
+        // Prevent default to avoid simulating click, selecting text, or double-firing
+        // Do not trigger if clicking on actions (like +2, DNF chips)
+        if ((e.target as HTMLElement).closest('.action-chip')) return;
+        if (e.button && e.button !== 0) return; // Ignore right-clicks
+        if ((e.target as HTMLElement).closest('.timer-controls')) return; // Ignore inputs if any
+        handleTimerPressDown();
+    };
+
+    const handlePointerUp = (e: React.PointerEvent) => {
+        if ((e.target as HTMLElement).closest('.action-chip')) return;
+        if (e.button && e.button !== 0) return;
+        handleTimerPressUp();
+    };
 
     // --- Manual Logic (Typing Numbers) ---
     const handleManualTyping = useCallback(
@@ -824,7 +831,13 @@ export default function Timer() {
             <section className="timer-section-1">
                 {/* Column 1: Clock */}
                 <div className="timer-col-1">
-                    <div className="timer-card clock-card">
+                    <div 
+                        className={`timer-card clock-card ${inputMethod === "timer" ? "tap-enabled" : ""}`}
+                        onPointerDown={inputMethod === "timer" ? handlePointerDown : undefined}
+                        onPointerUp={inputMethod === "timer" ? handlePointerUp : undefined}
+                        onPointerLeave={inputMethod === "timer" ? handlePointerUp : undefined}
+                        onPointerCancel={inputMethod === "timer" ? handlePointerUp : undefined}
+                    >
                         {/* Z-stack base: timer display fills the full card, perfectly centered */}
                         <div className="clock-display-base">
                             <div className={`clock-decorators ${isInspecting || isRunning ? "active-floating" : ""} ${isRunning && !isInspecting ? "timer-active" : ""}`}>

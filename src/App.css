@@ -5,7 +5,11 @@
 .app-layout {
   min-height: 100vh;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+  }
 
   & .app-main-content {
     flex:     1;

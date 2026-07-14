@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { Heart, Sun, Moon, Clock } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Heart, Sun, Moon, Clock, Menu } from "lucide-react";
 import logo from "../../assets/logo.svg";
 import "./Sidebar.css";
 import Toggle from "../Toggle/Toggle"
@@ -21,47 +21,67 @@ interface SidebarProps {
     setIsCollapsed: (collapsed: boolean) => void;
 }
 export default function Sidebar({ theme, setThemeState, activePage, setPageState, isCollapsed, setIsCollapsed }: SidebarProps) {
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
     useEffect(() => {
         const handleResize = () => {
-            if (window.innerWidth < 768) {
-                setIsCollapsed(true);
+            if (window.innerWidth >= 768) {
+                setIsMobileMenuOpen(false);
             }
         };
         handleResize(); // run on initial mount
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
-    }, [setIsCollapsed]);
+    }, []);
 
     return (
-        <aside className={`sidebar ${isCollapsed ? "collapsed" : ""}`}>
-            <div className="sidebar-container">
-                <div className="sidebar-brand">
-                    <Brand clickFunc={() => {
-                        if (window.innerWidth < 768) return; // Lock toggle on mobile
-                        setIsCollapsed(!isCollapsed);
-                    }} />
-                </div>
-                <div className="sidebar-nav">
-                    <NavLinks activePage={activePage} setPageState={setPageState} />
-                </div>
-                <div className="sidebar-footer">
-                    <Toggle clickFunc={() => setThemeState(theme === "light" ? "dark" : "light")}
-                        leftIcon={Sun}
-                        rightIcon={Moon}
-                        isLeftCondition={theme === "light"}>
-                    </Toggle>
-                    <div className="sidebar-cta">
-                        <SolidButton
-                            className="btn-support"
-                            icon={Heart}
-                            label="Support Us!"
-                            clickFunc={() => { }}
-                            hoverIconColor="#f43f5e"
-                        />
+        <>
+            <aside className={`sidebar ${isCollapsed ? "collapsed" : ""}`}>
+                <div className="sidebar-container">
+                    <button className="mobile-menu-btn" onClick={() => setIsMobileMenuOpen(true)} aria-label="Open Menu">
+                        <Menu size={24} />
+                    </button>
+                    
+                    <div className={`sidebar-drawer ${isMobileMenuOpen ? "open" : ""}`}>
+                        <div className="sidebar-brand">
+                            <Brand clickFunc={() => {
+                                if (window.innerWidth >= 768) {
+                                    setIsCollapsed(!isCollapsed);
+                                } else {
+                                    setIsMobileMenuOpen(false);
+                                }
+                            }} />
+                        </div>
+                        <div className="sidebar-nav">
+                            <NavLinks activePage={activePage} setPageState={(page) => {
+                                setPageState?.(page);
+                                setIsMobileMenuOpen(false);
+                            }} />
+                        </div>
+                    </div>
+                    
+                    <div className="sidebar-footer">
+                        <Toggle clickFunc={() => setThemeState(theme === "light" ? "dark" : "light")}
+                            leftIcon={Sun}
+                            rightIcon={Moon}
+                            isLeftCondition={theme === "light"}>
+                        </Toggle>
+                        <div className="sidebar-cta">
+                            <SolidButton
+                                className="btn-support"
+                                icon={Heart}
+                                label="Support Us!"
+                                clickFunc={() => { }}
+                                hoverIconColor="#f43f5e"
+                            />
+                        </div>
                     </div>
                 </div>
-            </div>
-        </aside>
+            </aside>
+            {isMobileMenuOpen && (
+                <div className="sidebar-backdrop" onClick={() => setIsMobileMenuOpen(false)} />
+            )}
+        </>
     );
 }
 

@@ -100,6 +100,13 @@
   border-bottom: none !important;
   box-shadow: none !important;
 
+  &.tap-enabled {
+    cursor: pointer;
+    touch-action: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   /* ─── Base layer: timer display ─────────────────────────── */
   & .clock-display-base {
     position:       absolute;
