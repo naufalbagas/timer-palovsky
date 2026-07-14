@@ -3,6 +3,7 @@
   inset:           0;
   z-index:         var(--z-modal-backdrop);
   background:      rgba(0, 0, 0, 0.45);
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
   display:         flex;
   align-items:     center;
@@ -94,6 +95,7 @@
     justify-content: flex-end;
     gap:             var(--space-3);
     padding:         var(--space-4) var(--space-5);
+    background:      #f8fafc;
     background:      light-dark(#f8fafc, #090e16);
     border-top:      2px solid var(--border);
 
@@ -191,6 +193,7 @@
       border:     2px solid transparent;
 
       &:hover {
+        background: rgba(0, 0, 0, 0.05);
         background: light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.05));
         color:      var(--foreground);
       }
@@ -214,4 +217,14 @@
 @keyframes modalScaleOut {
   from { transform: scale(1); opacity: 1; }
   to   { transform: scale(0.9); opacity: 0; }
+}
+
+:root[data-theme="dark"] {
+  & .modal-footer {
+    background: #090e16;
+  }
+
+  & .btn-keep-session:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
 }

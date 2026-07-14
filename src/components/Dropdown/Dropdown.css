@@ -133,6 +133,7 @@
       }
 
       &.active {
+        background:  rgba(31, 105, 255, 0.08);
         background:  light-dark(rgba(31, 105, 255, 0.08), rgba(91, 141, 255, 0.15));
         color:       var(--primary);
         font-weight: 700;
@@ -168,4 +169,8 @@
 @keyframes dropdownPopOut {
   from { opacity: 1; transform: scale(1); }
   to   { opacity: 0; transform: scale(0.85); }
+}
+
+:root[data-theme="dark"] .custom-dropdown-item.active {
+  background: rgba(91, 141, 255, 0.15);
 }

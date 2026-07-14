@@ -51,6 +51,11 @@
   min-height:     60vh;
   background:     linear-gradient(
     135deg,
+    rgba(31, 105, 255, 0.05) 0%,
+    rgba(20, 216, 182, 0.05) 100%
+  );
+  background:     linear-gradient(
+    135deg,
     light-dark(rgba(31, 105, 255, 0.05), rgba(91, 141, 255, 0.07)) 0%,
     light-dark(rgba(20, 216, 182, 0.05), rgba(20, 216, 182, 0.07)) 100%
   );
@@ -194,6 +199,7 @@
   display:         flex;
   align-items:     center;
   justify-content: center;
+  background:      rgba(31, 105, 255, 0.1);
   background:      light-dark(rgba(31, 105, 255, 0.1), rgba(91, 141, 255, 0.1));
   color:           var(--primary);
 }
@@ -341,6 +347,7 @@
   align-items:   center;
   gap:           var(--space-3);
   padding:       var(--space-2) var(--space-3);
+  background:    rgba(0, 0, 0, 0.02);
   background:    light-dark(rgba(0, 0, 0, 0.02), rgba(255, 255, 255, 0.02));
   border:        1px solid var(--border);
   border-radius: var(--radius-md);
@@ -349,6 +356,7 @@
 
   &.completed {
     border-color: var(--success);
+    background:   rgba(16, 185, 129, 0.05);
     background:   light-dark(rgba(16, 185, 129, 0.05), rgba(52, 211, 153, 0.05));
     opacity:      0.8;
 
@@ -405,6 +413,7 @@
   width:            36px;
   height:           36px;
   border-radius:    50%;
+  background:       rgba(0, 0, 0, 0.04);
   background:       light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.04));
   border:           1px solid var(--border-strong);
   color:            var(--primary);
@@ -448,4 +457,30 @@
 @keyframes pulse {
   0%   { transform: scale(1);    opacity: 0.9; }
   100% { transform: scale(1.05); opacity: 1; }
+}
+
+:root[data-theme="dark"] {
+  & .hero-section {
+    background: linear-gradient(
+      135deg,
+      rgba(91, 141, 255, 0.07) 0%,
+      rgba(20, 216, 182, 0.07) 100%
+    );
+  }
+
+  & .feature-icon-wrapper {
+    background: rgba(91, 141, 255, 0.1);
+  }
+
+  & .roadmap-list-item {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  & .roadmap-list-item.completed {
+    background: rgba(52, 211, 153, 0.05);
+  }
+
+  & .mini-badge {
+    background: rgba(255, 255, 255, 0.04);
+  }
 }

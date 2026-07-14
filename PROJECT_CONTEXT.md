@@ -12,6 +12,7 @@ This document provides a comprehensive overview of the Palovsky project structur
 │   └── AGENTS.md               # Custom rules for AI agents
 ├── .clauderules                # Workspace-level rules for Claude AI
 ├── public/                     # Static assets
+├── note.md                     # CSS compatibility fallbacks change log
 └── src/                        # Main application source code
     ├── assets/                 # SVGs and images (e.g., logo.svg)
     ├── components/             # Reusable UI Components
