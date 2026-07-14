@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Settings, Plus, X, ChevronDown, Pencil, RefreshCw, Trash2, AlertTriangle, Eye } from "lucide-react";
+import { Settings, Plus, X, Pencil, RefreshCw, Trash2, AlertTriangle, Eye } from "lucide-react";
 import "./styles/Timer.css";
 import "./styles/ClockCard.css";
 import "./styles/OverviewCard.css";
 import "./styles/SessionsCard.css";
+import Modal from "../../components/Modal/Modal";
+import Dropdown from "../../components/Dropdown/Dropdown";
 import ScrambleImage from "../../features/scramble/ScrambleImage";
 import { generateScramble } from "../../features/scramble/scramble";
 import {
@@ -23,6 +25,7 @@ import {
     loadInputMethod,
     saveInputMethod,
     type Solve,
+    type Session,
 } from "../../features/storage/storage";
 
 // Format manual input string (e.g. "13522" -> "01:35.22")
@@ -79,7 +82,7 @@ export default function Timer() {
     const [isVoiceDropdownClosing, setIsVoiceDropdownClosing] = useState(false);
 
     // ponytail: Multiple sessions state — initialized from localStorage
-    const [sessions, setSessions] = useState<string[]>(() => loadSessions());
+    const [sessions, setSessions] = useState<Session[]>(() => loadSessions());
     const [activeSession, setActiveSession] = useState(() => loadActiveSession());
     const [isSessionDropdownOpen, setIsSessionDropdownOpen] = useState(false);
     const [isSessionDropdownClosing, setIsSessionDropdownClosing] = useState(false);
@@ -130,29 +133,38 @@ export default function Timer() {
         }, 150);
     }, []);
 
-    const handleRenameConfirm = (oldName: string) => {
+    const handleRenameConfirm = (oldId: string) => {
         const newName = renameValue.trim();
-        if (!newName || newName === oldName) {
+        if (!newName) {
             setRenamingSession(null);
             return;
         }
-        // Update sessions list
-        setSessions((prev) => prev.map((s) => (s === oldName ? newName : s)));
-        if (activeSession === oldName) setActiveSession(newName);
-        // ponytail: also update all solves that belong to the old session name
-        setSolves((prev) => {
-            const updated = prev.map((s) =>
-                s.session === oldName ? { ...s, session: newName } : s,
-            );
-            // Persist the full updated array to localStorage
-            localStorage.setItem("palovsky_solves", JSON.stringify(updated));
-            return updated;
-        });
+
+        // ponytail: unique name check (case-insensitive) excluding the current session
+        const isDuplicate = sessions.some((s) => s.name.toLowerCase() === newName.toLowerCase() && s.id !== oldId);
+        if (isDuplicate) {
+            setConfirmDialog({
+                title: "Duplicate Session Name",
+                message: `Session name "${newName}" already exists! Please use a unique name.`,
+                confirmText: "OK",
+                cancelText: "", // ponytail: empty string hides the cancel button
+                showIcon: true,
+                onConfirm: () => {},
+            });
+            setRenamingSession(null);
+            return;
+        }
+
+        // Update sessions list (keeps IDs unchanged)
+        setSessions((prev) => prev.map((s) => (s.id === oldId ? { ...s, name: newName } : s)));
         setRenamingSession(null);
     };
 
-    const handleDeleteSession = (sessionName: string, e: React.MouseEvent) => {
+    const handleDeleteSession = (sessionId: string, e: React.MouseEvent) => {
         e.stopPropagation(); // prevent selecting the session
+
+        const sessionObj = sessions.find((s) => s.id === sessionId);
+        const sessionName = sessionObj?.name || "this session";
 
         setConfirmDialog({
             title: "Delete Session?",
@@ -161,21 +173,21 @@ export default function Timer() {
             cancelText: "Cancel",
             onConfirm: () => {
                 // ponytail: filter out deleted session
-                const nextSessions = sessions.filter((s) => s !== sessionName);
-                const finalSessions = nextSessions.length > 0 ? nextSessions : ["Session 1"];
+                const nextSessions = sessions.filter((s) => s.id !== sessionId);
+                const finalSessions = nextSessions.length > 0 ? nextSessions : [{ id: "session-1", name: "Session 1" }];
                 setSessions(finalSessions);
                 saveSessions(finalSessions);
 
                 // ponytail: remove all solves belonging to this session
-                const nextSolves = solves.filter((s) => (s.session || "Session 1") !== sessionName);
+                const nextSolves = solves.filter((s) => (s.session || "session-1") !== sessionId);
                 setSolves(nextSolves);
                 saveSolves(nextSolves);
 
                 // ponytail: fallback active session if the deleted one was selected
-                if (activeSession === sessionName) {
+                if (activeSession === sessionId) {
                     const fallbackSession = finalSessions[0];
-                    setActiveSession(fallbackSession);
-                    saveActiveSession(fallbackSession);
+                    setActiveSession(fallbackSession.id);
+                    saveActiveSession(fallbackSession.id);
                 }
             }
         });
@@ -204,7 +216,7 @@ export default function Timer() {
         if (type === cubeType) return;
 
         // Check if there is at least one solve in the active session, but of a different cubeType
-        const activeSolves = solves.filter((solve) => (solve.session || "Session 1") === activeSession);
+        const activeSolves = solves.filter((solve) => (solve.session || "session-1") === activeSession);
         const hasDifferentCube = activeSolves.some((solve) => solve.cubeType !== type);
 
         if (activeSolves.length > 0 && hasDifferentCube) {
@@ -217,10 +229,21 @@ export default function Timer() {
                 confirmBtnClass: "btn-add-session",
                 cancelBtnClass: "btn-keep-session",
                 onConfirm: () => {
-                    const nextId = sessions.length + 1;
-                    const newSessionName = `Session ${nextId}`;
-                    setSessions((prev) => [...prev, newSessionName]);
-                    setActiveSession(newSessionName);
+                    const nextIdNumber = sessions.length + 1;
+                    let newSessionName = `Session ${nextIdNumber}`;
+                    let counter = nextIdNumber;
+                    while (sessions.some((s) => s.name.toLowerCase() === newSessionName.toLowerCase())) {
+                        counter++;
+                        newSessionName = `Session ${counter}`;
+                    }
+
+                    const newSession = {
+                        id: `session-${Date.now()}`,
+                        name: newSessionName,
+                    };
+
+                    setSessions((prev) => [...prev, newSession]);
+                    setActiveSession(newSession.id);
                     setCubeType(type);
                     setScramble(generateScramble(type));
                 },
@@ -236,10 +259,21 @@ export default function Timer() {
     };
 
     const handleNewSession = () => {
-        const nextId = sessions.length + 1;
-        const newSessionName = `Session ${nextId}`;
-        setSessions([...sessions, newSessionName]);
-        setActiveSession(newSessionName);
+        const nextIdNumber = sessions.length + 1;
+        let newSessionName = `Session ${nextIdNumber}`;
+        let counter = nextIdNumber;
+        while (sessions.some((s) => s.name.toLowerCase() === newSessionName.toLowerCase())) {
+            counter++;
+            newSessionName = `Session ${counter}`;
+        }
+
+        const newSession = {
+            id: `session-${Date.now()}`,
+            name: newSessionName,
+        };
+
+        setSessions([...sessions, newSession]);
+        setActiveSession(newSession.id);
     };
 
     const activeSessionRef = useRef(activeSession);
@@ -326,40 +360,11 @@ export default function Timer() {
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (
-                dropdownRef.current &&
-                !dropdownRef.current.contains(e.target as Node)
-            ) {
-                setIsCubeDropdownOpen(false);
-                setIsDropdownClosing(false);
-            }
-            if (
                 settingsContainerRef.current &&
                 !settingsContainerRef.current.contains(e.target as Node)
             ) {
                 setIsSettingsOpen(false);
                 setIsSettingsClosing(false);
-            }
-            if (
-                inputMethodDropdownRef.current &&
-                !inputMethodDropdownRef.current.contains(e.target as Node)
-            ) {
-                setIsInputMethodDropdownOpen(false);
-                setIsInputMethodClosing(false);
-            }
-            if (
-                voiceDropdownRef.current &&
-                !voiceDropdownRef.current.contains(e.target as Node)
-            ) {
-                setIsVoiceDropdownOpen(false);
-                setIsVoiceDropdownClosing(false);
-            }
-            if (
-                sessionDropdownRef.current &&
-                !sessionDropdownRef.current.contains(e.target as Node)
-            ) {
-                setIsSessionDropdownOpen(false);
-                setIsSessionDropdownClosing(false);
-                setRenamingSession(null);
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
@@ -729,7 +734,7 @@ export default function Timer() {
     }, [pendingSave, isRunning]);
 
     const filteredSolves = solves.filter(
-        (solve) => (solve.session || "Session 1") === activeSession,
+        (solve) => (solve.session || "session-1") === activeSession,
     );
 
 
@@ -822,13 +827,16 @@ export default function Timer() {
                     <div className="timer-card clock-card">
                         {/* Z-stack base: timer display fills the full card, perfectly centered */}
                         <div className="clock-display-base">
-                            <div className={`clock-decorators ${isInspecting || isRunning ? "active-floating" : ""}`}>
+                            <div className={`clock-decorators ${isInspecting || isRunning ? "active-floating" : ""} ${isRunning && !isInspecting ? "timer-active" : ""}`}>
                                 <div className="decorator dec-circle-1"></div>
                                 <div className="decorator dec-square-1"></div>
                                 <div className="decorator dec-triangle-1"></div>
                                 <div className="decorator dec-cross-1"></div>
                                 <div className="decorator dec-ring-1"></div>
                                 <div className="decorator dec-star-1"></div>
+                                <div className="decorator dec-diamond-1"></div>
+                                <div className="decorator dec-circle-2"></div>
+                                <div className="decorator dec-spark-1"></div>
                             </div>
                             <div className={`timer-display ${timerColorClass}`}>
                                 <span className="timer-main-text">
@@ -874,41 +882,26 @@ export default function Timer() {
 
                         {/* Z-stack overlay top: cube dropdown + scramble notation + scramble preview */}
                         <div className="clock-top-bar">
-                            <div
-                                className="custom-dropdown-container"
-                                ref={dropdownRef}
-                            >
-                                <button
-                                    className="custom-dropdown-btn"
-                                    onClick={() => {
-                                        if (isCubeDropdownOpen) {
-                                            closeDropdownWithAnimation();
-                                        } else {
-                                            setIsCubeDropdownOpen(true);
-                                        }
-                                    }}
-                                >
-                                    {cubeType} <ChevronDown size={16} />
-                                </button>
-                                {isCubeDropdownOpen && (
-                                    <div className={`custom-dropdown-list ${isDropdownClosing ? "closing" : ""}`}>
-                                        {["2x2", "3x3", "4x4", "5x5"].map(
-                                            (type) => (
-                                                <div
-                                                    key={type}
-                                                    className={`custom-dropdown-item ${cubeType === type ? "active" : ""}`}
-                                                    onClick={() => {
-                                                        handleCubeChangeCustom(type);
-                                                        closeDropdownWithAnimation();
-                                                    }}
-                                                >
-                                                    {type}
-                                                </div>
-                                            ),
-                                        )}
-                                    </div>
-                                )}
-                            </div>
+                            <Dropdown<string>
+                                isOpen={isCubeDropdownOpen}
+                                onToggle={() => {
+                                    if (isCubeDropdownOpen) {
+                                        closeDropdownWithAnimation();
+                                    } else {
+                                        setIsCubeDropdownOpen(true);
+                                    }
+                                }}
+                                onClose={closeDropdownWithAnimation}
+                                label={cubeType}
+                                selectedValue={cubeType}
+                                items={["2x2", "3x3", "4x4", "5x5"].map((type) => ({ value: type, label: type }))}
+                                onSelect={(type) => {
+                                    handleCubeChangeCustom(type);
+                                    closeDropdownWithAnimation();
+                                }}
+                                containerRef={dropdownRef}
+                                isClosing={isDropdownClosing}
+                            />
                             <div className="clock-scramble-wrapper">
                                 <div className="clock-scramble">{scramble}</div>
                                 <button
@@ -1019,97 +1012,63 @@ export default function Timer() {
                                                 <span className="settings-label">
                                                     Voice Gender
                                                 </span>
-                                                <div
-                                                    className="custom-dropdown-container small"
-                                                    ref={voiceDropdownRef}
-                                                >
-                                                    <button
-                                                        className="custom-dropdown-btn small"
-                                                        onClick={() => {
-                                                            if (isVoiceDropdownOpen) {
-                                                                closeVoiceDropdownWithAnimation();
-                                                            } else {
-                                                                setIsVoiceDropdownOpen(true);
-                                                            }
-                                                        }}
-                                                    >
-                                                        {inspectionVoice === "male" ? "Male" : "Female"}
-                                                        <ChevronDown size={12} />
-                                                    </button>
-                                                    {isVoiceDropdownOpen && (
-                                                        <div className={`custom-dropdown-list small ${isVoiceDropdownClosing ? "closing" : ""}`}>
-                                                            <div
-                                                                className={`custom-dropdown-item small ${inspectionVoice === "male" ? "active" : ""}`}
-                                                                onClick={() => {
-                                                                    setInspectionVoice("male");
-                                                                    closeVoiceDropdownWithAnimation();
-                                                                }}
-                                                            >
-                                                                Male
-                                                            </div>
-                                                            <div
-                                                                className={`custom-dropdown-item small ${inspectionVoice === "female" ? "active" : ""}`}
-                                                                onClick={() => {
-                                                                    setInspectionVoice("female");
-                                                                    closeVoiceDropdownWithAnimation();
-                                                                }}
-                                                            >
-                                                                Female
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                <Dropdown
+                                                    isOpen={isVoiceDropdownOpen}
+                                                    onToggle={() => {
+                                                        if (isVoiceDropdownOpen) {
+                                                            closeVoiceDropdownWithAnimation();
+                                                        } else {
+                                                            setIsVoiceDropdownOpen(true);
+                                                        }
+                                                    }}
+                                                    onClose={closeVoiceDropdownWithAnimation}
+                                                    label={inspectionVoice === "male" ? "Male" : "Female"}
+                                                    selectedValue={inspectionVoice}
+                                                    items={[
+                                                        { value: "male", label: "Male" },
+                                                        { value: "female", label: "Female" }
+                                                    ]}
+                                                    onSelect={(gender) => {
+                                                        setInspectionVoice(gender as "male" | "female");
+                                                        closeVoiceDropdownWithAnimation();
+                                                    }}
+                                                    className="small"
+                                                    containerRef={voiceDropdownRef}
+                                                    isClosing={isVoiceDropdownClosing}
+                                                />
                                             </div>
                                         )}
                                         <div className="settings-row">
                                             <span className="settings-label">
                                                 Input Method
                                             </span>
-                                            <div
-                                                className="custom-dropdown-container small"
-                                                ref={inputMethodDropdownRef}
-                                            >
-                                                <button
-                                                    className="custom-dropdown-btn small"
-                                                    onClick={() => {
-                                                        if (isInputMethodDropdownOpen) {
-                                                            closeInputMethodDropdownWithAnimation();
-                                                        } else {
-                                                            setIsInputMethodDropdownOpen(true);
-                                                        }
-                                                    }}
-                                                >
-                                                    {inputMethod === "timer" ? "Timer" : "Manual"} <ChevronDown size={12} />
-                                                </button>
-                                                {isInputMethodDropdownOpen && (
-                                                    <div className={`custom-dropdown-list small ${isInputMethodClosing ? "closing" : ""}`}>
-                                                        <div
-                                                            className={`custom-dropdown-item small ${inputMethod === "timer" ? "active" : ""}`}
-                                                            onClick={() => {
-                                                                setInputMethod("timer");
-                                                                setTime(0);
-                                                                setManualStr("");
-                                                                closeInputMethodDropdownWithAnimation();
-                                                                closeSettingsWithAnimation();
-                                                            }}
-                                                        >
-                                                            Timer
-                                                        </div>
-                                                        <div
-                                                            className={`custom-dropdown-item small ${inputMethod === "manual" ? "active" : ""}`}
-                                                            onClick={() => {
-                                                                setInputMethod("manual");
-                                                                setTime(0);
-                                                                setManualStr("");
-                                                                closeInputMethodDropdownWithAnimation();
-                                                                closeSettingsWithAnimation();
-                                                            }}
-                                                        >
-                                                            Manual
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
+                                            <Dropdown
+                                                isOpen={isInputMethodDropdownOpen}
+                                                onToggle={() => {
+                                                    if (isInputMethodDropdownOpen) {
+                                                        closeInputMethodDropdownWithAnimation();
+                                                    } else {
+                                                        setIsInputMethodDropdownOpen(true);
+                                                    }
+                                                }}
+                                                onClose={closeInputMethodDropdownWithAnimation}
+                                                label={inputMethod === "timer" ? "Timer" : "Manual"}
+                                                selectedValue={inputMethod}
+                                                items={[
+                                                    { value: "timer", label: "Timer" },
+                                                    { value: "manual", label: "Manual" }
+                                                ]}
+                                                onSelect={(method) => {
+                                                    setInputMethod(method as "timer" | "manual");
+                                                    setTime(0);
+                                                    setManualStr("");
+                                                    closeInputMethodDropdownWithAnimation();
+                                                    closeSettingsWithAnimation();
+                                                }}
+                                                className="small"
+                                                containerRef={inputMethodDropdownRef}
+                                                isClosing={isInputMethodClosing}
+                                            />
                                         </div>
                                     </div>
                                 )}
@@ -1139,12 +1098,35 @@ export default function Timer() {
                 <div className="timer-col-2">
                     <div className="timer-card time-card">
                         <div className="sessions-header">
-                            <div
-                                className="custom-dropdown-container"
-                                ref={sessionDropdownRef}
-                            >
-                                {/* ponytail: rename icon sits left of trigger, opens inline input */}
-                                {renamingSession ? (
+                            <Dropdown<string>
+                                isOpen={isSessionDropdownOpen}
+                                onToggle={() => {
+                                    if (isSessionDropdownOpen) {
+                                        closeSessionDropdownWithAnimation();
+                                    } else {
+                                        setIsSessionDropdownOpen(true);
+                                    }
+                                }}
+                                onClose={() => {
+                                    closeSessionDropdownWithAnimation();
+                                    setRenamingSession(null);
+                                }}
+                                label={sessions.find((s) => s.id === activeSession)?.name || "Session 1"}
+                                selectedValue={activeSession}
+                                items={sessions.map((session) => ({
+                                    value: session.id,
+                                    label: session.name,
+                                    actionIcon: <Trash2 size={13} />,
+                                    actionTitle: "Delete session",
+                                    onActionClick: (_, e) => handleDeleteSession(session.id, e)
+                                }))}
+                                onSelect={(id) => {
+                                    setActiveSession(id);
+                                    closeSessionDropdownWithAnimation();
+                                }}
+                                containerRef={sessionDropdownRef}
+                                isClosing={isSessionDropdownClosing}
+                                renameInput={renamingSession ? (
                                     <input
                                         className="session-rename-input"
                                         autoFocus
@@ -1159,64 +1141,27 @@ export default function Timer() {
                                             if (e.key === "Escape") setRenamingSession(null);
                                         }}
                                         onBlur={(e) => {
-                                            // Only cancel if not submitting via Enter
                                             if (!e.currentTarget.dataset.submitting) {
                                                 handleRenameConfirm(renamingSession!);
                                             }
                                         }}
                                     />
-                                ) : (
-                                    <div className="session-trigger-row">
-                                        <button
-                                            className="session-rename-btn"
-                                            title="Rename session"
-                                            onClick={() => {
-                                                setRenamingSession(activeSession);
-                                                setRenameValue(activeSession);
-                                                // ponytail: don't close dropdown here — closeSessionDropdownWithAnimation was calling setRenamingSession(null)
-                                                if (isSessionDropdownOpen) closeSessionDropdownWithAnimation();
-                                            }}
-                                        >
-                                            <Pencil size={13} />
-                                        </button>
-                                        <button
-                                            className="session-dropdown-trigger"
-                                            onClick={() => {
-                                                if (isSessionDropdownOpen) {
-                                                    closeSessionDropdownWithAnimation();
-                                                } else {
-                                                    setIsSessionDropdownOpen(true);
-                                                }
-                                            }}
-                                        >
-                                            {activeSession} <ChevronDown size={16} />
-                                        </button>
-                                    </div>
-                                )}
-                                {isSessionDropdownOpen && (
-                                    <div className={`custom-dropdown-list ${isSessionDropdownClosing ? "closing" : ""}`}>
-                                        {sessions.map((sessionName) => (
-                                            <div
-                                                key={sessionName}
-                                                className={`custom-dropdown-item ${activeSession === sessionName ? "active" : ""}`}
-                                                onClick={() => {
-                                                    setActiveSession(sessionName);
-                                                    closeSessionDropdownWithAnimation();
-                                                }}
-                                            >
-                                                <span className="session-name-text">{sessionName}</span>
-                                                <button
-                                                    className="session-delete-btn"
-                                                    title="Delete session"
-                                                    onClick={(e) => handleDeleteSession(sessionName, e)}
-                                                >
-                                                    <Trash2 size={13} />
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                                ) : undefined}
+                                triggerPrefix={
+                                    <button
+                                        className="session-rename-btn"
+                                        title="Rename session"
+                                        onClick={() => {
+                                            setRenamingSession(activeSession);
+                                            const activeObj = sessions.find((s) => s.id === activeSession);
+                                            setRenameValue(activeObj?.name || "");
+                                            if (isSessionDropdownOpen) closeSessionDropdownWithAnimation();
+                                        }}
+                                    >
+                                        <Pencil size={13} />
+                                    </button>
+                                }
+                            />
                             <button className="btn-new" onClick={handleNewSession}>
                                 <Plus size={16} /> New
                             </button>
@@ -1338,49 +1283,41 @@ export default function Timer() {
                 </div>
             </section>
 
-            {confirmDialog && (
-                <div className={`modal-backdrop ${isConfirmClosing ? "closing" : ""}`}>
-                    <div className={`modal-card ${isConfirmClosing ? "closing" : ""}`}>
-                        <div className="modal-header">
-                            <div className="modal-header-title-container">
-                                {confirmDialog.showIcon && <AlertTriangle className="modal-alert-icon" size={20} />}
-                                <span className="modal-title">{confirmDialog.title || "Confirmation"}</span>
-                            </div>
+            <Modal
+                isOpen={!!confirmDialog}
+                onClose={() => closeConfirmWithAnimation()}
+                title={confirmDialog?.title || "Confirmation"}
+                icon={confirmDialog?.showIcon ? <AlertTriangle className="modal-alert-icon" size={20} /> : undefined}
+                isClosing={isConfirmClosing}
+                footer={
+                    <>
+                        {confirmDialog?.cancelText !== "" && (
                             <button
-                                className="modal-close-btn"
-                                onClick={() => closeConfirmWithAnimation()}
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
-                        <div className="modal-body">
-                            <p className="modal-message">{confirmDialog.message}</p>
-                        </div>
-                        <div className="modal-footer">
-                            <button
-                                className={confirmDialog.cancelBtnClass || "btn-cancel"}
+                                className={confirmDialog?.cancelBtnClass || "btn-cancel"}
                                 onClick={() => {
                                     closeConfirmWithAnimation(() => {
-                                        if (confirmDialog.onCancel) confirmDialog.onCancel();
+                                        if (confirmDialog?.onCancel) confirmDialog.onCancel();
                                     });
                                 }}
                             >
-                                {confirmDialog.cancelText || "Cancel"}
+                                {confirmDialog?.cancelText || "Cancel"}
                             </button>
-                            <button
-                                className={confirmDialog.confirmBtnClass || "btn-confirm"}
-                                onClick={() => {
-                                    closeConfirmWithAnimation(() => {
-                                        confirmDialog.onConfirm();
-                                    });
-                                }}
-                            >
-                                {confirmDialog.confirmText || "Confirm"}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+                        )}
+                        <button
+                            className={confirmDialog?.confirmBtnClass || "btn-confirm"}
+                            onClick={() => {
+                                closeConfirmWithAnimation(() => {
+                                    confirmDialog?.onConfirm();
+                                });
+                            }}
+                        >
+                            {confirmDialog?.confirmText || "Confirm"}
+                        </button>
+                    </>
+                }
+            >
+                <p className="modal-message">{confirmDialog?.message}</p>
+            </Modal>
         </div>
     );
 }

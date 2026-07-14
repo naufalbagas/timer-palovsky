@@ -37,37 +37,55 @@
 
 @keyframes floatCircle1 {
   0% { translate: 0 0; }
-  50% { translate: 7px -14px; }
-  100% { translate: -9.5px 9.5px; }
+  50% { translate: calc(7px * var(--decor-dist-scale, 1)) calc(-14px * var(--decor-dist-scale, 1)); }
+  100% { translate: calc(-9.5px * var(--decor-dist-scale, 1)) calc(9.5px * var(--decor-dist-scale, 1)); }
 }
 
 @keyframes floatSquare1 {
   0% { translate: 0 0; rotate: 15deg; }
-  50% { translate: 12px 12px; rotate: 45deg; }
-  100% { translate: -12px -18px; rotate: -15deg; }
+  50% { translate: calc(12px * var(--decor-dist-scale, 1)) calc(12px * var(--decor-dist-scale, 1)); rotate: 45deg; }
+  100% { translate: calc(-12px * var(--decor-dist-scale, 1)) calc(-18px * var(--decor-dist-scale, 1)); rotate: -15deg; }
 }
 
 @keyframes floatTriangle1 {
   0% { translate: 0 0; rotate: 0deg; }
-  50% { translate: 0 -18px; rotate: 10deg; }
-  100% { translate: 0 6px; rotate: -10deg; }
+  50% { translate: 0 calc(-18px * var(--decor-dist-scale, 1)); rotate: 10deg; }
+  100% { translate: 0 calc(6px * var(--decor-dist-scale, 1)); rotate: -10deg; }
 }
 
 @keyframes floatCross1 {
   0% { translate: 0 0; rotate: 0deg; }
-  50% { translate: 0 14px; rotate: 180deg; }
-  100% { translate: 0 -9.5px; rotate: 360deg; }
+  50% { translate: 0 calc(14px * var(--decor-dist-scale, 1)); rotate: 180deg; }
+  100% { translate: 0 calc(-9.5px * var(--decor-dist-scale, 1)); rotate: 360deg; }
 }
 
 @keyframes floatRing1 {
   0% { translate: 0 0; rotate: 0deg; }
-  100% { translate: 0 -12px; rotate: 360deg; }
+  100% { translate: 0 calc(-12px * var(--decor-dist-scale, 1)); rotate: 360deg; }
 }
 
 @keyframes floatStar1 {
   0% { translate: 0 0; rotate: 0deg; }
-  50% { translate: 0 -9.5px; rotate: 90deg; }
-  100% { translate: 0 14px; rotate: 180deg; }
+  50% { translate: 0 calc(-9.5px * var(--decor-dist-scale, 1)); rotate: 90deg; }
+  100% { translate: 0 calc(14px * var(--decor-dist-scale, 1)); rotate: 180deg; }
+}
+
+@keyframes floatDiamond1 {
+  0% { translate: 0 0; rotate: 0deg; }
+  50% { translate: calc(-8px * var(--decor-dist-scale, 1)) calc(8px * var(--decor-dist-scale, 1)); rotate: 45deg; }
+  100% { translate: calc(8px * var(--decor-dist-scale, 1)) calc(-8px * var(--decor-dist-scale, 1)); rotate: 90deg; }
+}
+
+@keyframes floatCircle2 {
+  0% { translate: 0 0; }
+  50% { translate: calc(9px * var(--decor-dist-scale, 1)) calc(-9px * var(--decor-dist-scale, 1)); }
+  100% { translate: calc(-9px * var(--decor-dist-scale, 1)) calc(9px * var(--decor-dist-scale, 1)); }
+}
+
+@keyframes floatSpark1 {
+  0% { translate: 0 0; scale: 0.9; }
+  50% { translate: calc(0px * var(--decor-dist-scale, 1)) calc(12px * var(--decor-dist-scale, 1)); scale: 1.1; }
+  100% { translate: calc(0px * var(--decor-dist-scale, 1)) calc(-12px * var(--decor-dist-scale, 1)); scale: 0.9; }
 }
 
 /* ─── Card root ─────────────────────────────────────────────── */
@@ -112,6 +130,14 @@
       &.active-floating .decorator {
         opacity: 0.9;
         scale: 1.15;
+      }
+
+      &.timer-active {
+        --decor-dist-scale: 1.75;
+
+        & .decorator {
+          scale: 2;
+        }
       }
 
       & .dec-circle-1 {
@@ -180,6 +206,48 @@
         clip-path: polygon(50% 0%, 65% 35%, 100% 50%, 65% 65%, 50% 100%, 35% 65%, 0% 50%, 35% 35%);
         filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.15));
         animation: floatStar1 5s ease-in-out infinite alternate;
+      }
+
+      & .dec-diamond-1 {
+        top: 45%;
+        left: 30%;
+        width: 20px;
+        height: 20px;
+        background-color: var(--secondary);
+        clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+        box-shadow: 0 4px 0 rgba(0, 0, 0, 0.15);
+        animation: floatDiamond1 7s ease-in-out infinite alternate;
+        opacity: 0.25;
+      }
+
+      & .dec-circle-2 {
+        top: 50%;
+        left: 68%;
+        width: 16px;
+        height: 16px;
+        background-color: var(--primary);
+        border-radius: 50%;
+        box-shadow: 0 4px 0 rgba(0, 0, 0, 0.15);
+        animation: floatCircle2 8s ease-in-out infinite alternate;
+        opacity: 0.25;
+      }
+
+      & .dec-spark-1 {
+        top: 60%;
+        left: 45%;
+        width: 22px;
+        height: 22px;
+        background-color: var(--warning);
+        clip-path: polygon(50% 15%, 60% 40%, 85% 50%, 60% 60%, 50% 85%, 40% 60%, 15% 50%, 40% 40%);
+        box-shadow: 0 4px 0 rgba(0, 0, 0, 0.15);
+        animation: floatSpark1 6s ease-in-out infinite alternate;
+        opacity: 0.25;
+      }
+
+      &.active-floating .dec-diamond-1,
+      &.active-floating .dec-circle-2,
+      &.active-floating .dec-spark-1 {
+        opacity: 0.6;
       }
     }
 

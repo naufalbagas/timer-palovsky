@@ -12,11 +12,67 @@
   top:        0;
   z-index:    var(--z-sticky);
   transition:
+    width            var(--transition-base),
     background-color var(--transition-base),
     border-color     var(--transition-base),
     box-shadow       var(--transition-base);
   display:        flex;
   flex-direction: column;
+}
+
+.sidebar.collapsed {
+  @media (min-width: 768px) {
+    width:      80px;
+
+    & .brand-name {
+      display: none;
+    }
+
+    & .brand-section {
+      justify-content: center;
+      width: 100%;
+    }
+
+    & .nav-btn {
+      justify-content: center;
+      padding: 12px;
+      width:   48px;
+      height:  48px;
+
+      & .nav-btn-content {
+        justify-content: center;
+
+        & span {
+          display: none;
+        }
+      }
+    }
+
+    & .btn-support {
+      justify-content: center;
+      padding: 12px;
+      width:   48px;
+      height:  48px;
+
+      & span {
+        display: none;
+      }
+
+      & .icon-heart {
+        margin: 0;
+      }
+    }
+
+    & .sidebar-container {
+      padding:     var(--space-4) var(--space-2);
+      align-items: center;
+    }
+
+    & .sidebar-footer {
+      align-items: center;
+      width:       100%;
+    }
+  }
 
   @media (max-width: 767px) {
     width:         100%;
@@ -343,47 +399,10 @@
   transform: rotate(360deg);
 }
 
-/* Support Button */
-.btn-support {
-  display:         inline-flex;
-  align-items:     center;
-  justify-content: flex-start;
-  gap:             var(--space-2);
-  padding:         10px 22px;
-  font-family:     var(--font-mono);
-  font-size:       var(--text-sm);
-  font-weight:     700;
-  color:           #ffffff !important;
-  background:      var(--primary);
-  border:          none;
-  border-bottom:   5px solid rgba(0, 0, 0, 0.2);
-  border-radius:   var(--radius-md);
-  cursor:          pointer;
-  position:        relative;
-  overflow:        hidden;
-  box-shadow:      0 3px 0 rgba(0, 0, 0, 0.15), 0 4px 12px rgba(31, 105, 255, 0.2);
-  transition:      all var(--transition-base);
-  width:           100%;
-
+/* Support Button Overrides */
+.solid-btn {
   &:hover {
-    transform:  translateY(-2px);
     box-shadow: 0 5px 0 rgba(0, 0, 0, 0.15), 0 0 16px -2px rgba(20, 209, 216, 0.65);
     filter:     brightness(1.05);
-  }
-
-  &:active {
-    transform:     translateY(1px);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow:    0 1px 0 rgba(0, 0, 0, 0.15), 0 2px 6px rgba(31, 105, 255, 0.2);
-  }
-
-  & .icon-heart {
-    transition: transform var(--transition-fast), color var(--transition-fast);
-  }
-
-  &:hover .icon-heart {
-    transform: scale(1.2);
-    color:     #f43f5e;
-    animation: heartBeat 0.6s infinite alternate ease-in-out;
   }
 }

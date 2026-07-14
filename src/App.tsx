@@ -29,6 +29,14 @@ export default function App() {
     // kalau nanti active link udah berubah tapi null, fallback ke home, 
     const ActivePageComponent = PAGES[pageState] || Home;
 
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+        return localStorage.getItem("sidebar-collapsed") === "true";
+    });
+
+    useEffect(() => {
+        localStorage.setItem("sidebar-collapsed", String(isSidebarCollapsed));
+    }, [isSidebarCollapsed]);
+
     return (
         <div className="app-layout">
             <Sidebar
@@ -36,6 +44,8 @@ export default function App() {
                 setThemeState={setThemeState}
                 activePage={pageState}
                 setPageState={setpageState}
+                isCollapsed={isSidebarCollapsed}
+                setIsCollapsed={setIsSidebarCollapsed}
             />
             <main className="app-main-content">
                 <ActivePageComponent />

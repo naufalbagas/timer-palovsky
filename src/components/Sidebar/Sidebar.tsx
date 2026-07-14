@@ -1,9 +1,9 @@
 import { Heart, Sun, Moon, Clock} from "lucide-react";
 import logo from "../../assets/logo.svg";
-import NavigationButton from "../Button/Navigation/NavigationButton"
 import "./Sidebar.css";
 import Toggle from "../Toggle/Toggle"
 import SolidButton from "../Button/Solid/SolidButton";
+import OutlineButton from "../Button/Outline/OutlineButton";
 
 /**
  * @param theme - di-passing ke @function ThemeToggle
@@ -16,28 +16,33 @@ interface SidebarProps {
     setThemeState: (t: "light" | "dark") => void;
     activePage?: string;
     setPageState?: (link: string) => void;
+    isCollapsed: boolean;
+    setIsCollapsed: (collapsed: boolean) => void;
 }
-export default function Sidebar({theme, setThemeState, activePage, setPageState}: SidebarProps) {
+export default function Sidebar({theme, setThemeState, activePage, setPageState, isCollapsed, setIsCollapsed}: SidebarProps) {
     return (
-        <aside className="sidebar">
+        <aside className={`sidebar ${isCollapsed ? "collapsed" : ""}`}>
             <div className="sidebar-container">
-                {/** Brand Section */}
                 <div className="sidebar-brand">
-                    <Brand clickFunc={() => setPageState?.("Timer")} />
+                    <Brand clickFunc={() => setIsCollapsed(!isCollapsed)} />
                 </div>
-                {/** Navigation Section */}
                 <div className="sidebar-nav">
                     <NavLinks activePage={activePage} setPageState={setPageState} />
                 </div>
-                {/** Footer Section */}
                 <div className="sidebar-footer">
-                    {/* <ThemeToggle theme={theme} setThemeState={setThemeState} /> */}
                     <Toggle clickFunc={() => setThemeState(theme === "light" ? "dark" : "light")} 
                         leftIcon={Sun} 
                         rightIcon={Moon} 
-                        isLeftCondition={theme === "light"}></Toggle>
+                        isLeftCondition={theme === "light"}>
+                    </Toggle>
                     <div className="sidebar-cta">
-                       <SolidButton icon={Heart} label="Support Us!" clickFunc={()=>{}} />
+                       <SolidButton 
+                           className="btn-support" 
+                           icon={Heart} 
+                           label="Support Us!" 
+                           clickFunc={()=>{}} 
+                           hoverIconColor="#f43f5e"
+                       />
                     </div>
                 </div>
             </div>
@@ -91,10 +96,9 @@ function NavLinks({activePage = "Home", setPageState}: NavLinksProps) {
                 {NAV_ITEMS.map((item) => {
                     return (
                         <li key={item.id}>
-                            <NavigationButton 
-                                activePage={activePage} 
-                                clickFunc={() => setPageState?.(item.id)} 
-                                itemID={item.id} 
+                            <OutlineButton 
+                                isActive={activePage === item.id}
+                                clickFunc={() => setPageState?.(item.id)}
                                 label={item.label} 
                                 icon={item.icon}/>
                         </li>

@@ -43,8 +43,7 @@
     transition:       all var(--transition-fast);
   }
 
-  &:hover::before,
-  &.active::before {
+  &:hover::before, &.active::before {
     border-color: var(--primary);
   }
 
@@ -60,8 +59,7 @@
     transition:       all var(--transition-base);
   }
 
-  &:hover::after,
-  &.active::after {
+  &:hover::after, &.active::after {
     background-color: var(--primary-darker);
     box-shadow:       0 4px 0 rgba(0, 0, 0, 0.15);
   }
@@ -69,12 +67,12 @@
   &:active::after {
     box-shadow: 0 0 0 rgba(0, 0, 0, 0.15);
   }
-}
 
-.nav-btn-content {
+  & .nav-btn-content {
   display:     flex;
   align-items: center;
   justify-content: start;
   gap:         var(--space-3);
   width:       100%;  
+}
 }

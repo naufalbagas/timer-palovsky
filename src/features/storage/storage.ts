@@ -1,30 +1,24 @@
-/**
- * storage.ts — Palovsky internal localStorage persistence.
- * Ponytail ultra: flat, typed, no abstraction overhead.
- */
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface Solve {
     id: number;
-    date: string;           // human-readable date string
-    session: string;        // session name
-    cubeType: string;       // e.g. "3x3", "2x2"
-    timeMs: number;         // raw time in milliseconds
-    scramble: string;       // notation string
-    scrambleState: number[] | null; // flat 54-cell color array for image render
-    penalty: "none" | "+2" | "dnf"; // future-proof
-    description?: string;   // optional solve notes
+    date: string;
+    session: string;
+    cubeType: string;
+    timeMs: number;
+    scramble: string;
+    scrambleState: number[] | null;
+    penalty: "none" | "+2" | "dnf";
+    description?: string;
 }
 
 export interface SessionStats {
     session: string;
-    avgAll: number;   // average of all valid solves (excludes DNF)
-    ao5: number;      // average of last 5 (0 if < 5 solves)
-    ao12: number;     // average of last 12 (0 if < 12 solves)
-    best: number;     // best single (0 if no solves)
-    worst: number;    // worst single (0 if no solves)
-    count: number;    // total number of solves in session
+    avgAll: number;
+    ao5: number;
+    ao12: number;
+    best: number;  
+    worst: number; 
+    count: number;
 }
 
 // ─── Keys ─────────────────────────────────────────────────────────────────────
@@ -37,7 +31,26 @@ const ACTIVE_SESSION_KEY = "palovsky_active_session";
 
 export function loadSolves(): Solve[] {
     try {
-        return JSON.parse(localStorage.getItem(SOLVES_KEY) ?? "[]");
+        const raw = localStorage.getItem(SOLVES_KEY);
+        if (!raw) return [];
+        const solves = JSON.parse(raw) as Solve[];
+        
+        // ponytail: migrate solves if using old session names
+        const sessions = loadSessions();
+        let migrated = false;
+        const updatedSolves = solves.map((solve) => {
+            const found = sessions.find((s) => s.name === solve.session || s.id === solve.session);
+            if (found && solve.session !== found.id) {
+                migrated = true;
+                return { ...solve, session: found.id };
+            }
+            return solve;
+        });
+
+        if (migrated) {
+            localStorage.setItem(SOLVES_KEY, JSON.stringify(updatedSolves));
+        }
+        return updatedSolves;
     } catch {
         return [];
     }
@@ -65,24 +78,49 @@ export function updateSolve(id: number, patch: Partial<Solve>): void {
 
 // ─── Sessions ─────────────────────────────────────────────────────────────────
 
-export function loadSessions(): string[] {
+export interface Session {
+    id: string;
+    name: string;
+}
+
+export function loadSessions(): Session[] {
     try {
-        return JSON.parse(localStorage.getItem(SESSIONS_KEY) ?? '["Session 1"]');
+        const raw = localStorage.getItem(SESSIONS_KEY);
+        if (!raw) return [{ id: "session-1", name: "Session 1" }];
+        
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+            // ponytail: migrate old string[] structure to Session[] on load
+            if (parsed.length > 0 && typeof parsed[0] === "string") {
+                const migrated = (parsed as string[]).map((name, idx) => ({
+                    id: `session-${idx + 1}`,
+                    name
+                }));
+                localStorage.setItem(SESSIONS_KEY, JSON.stringify(migrated));
+                return migrated;
+            }
+            return parsed as Session[];
+        }
+        return [{ id: "session-1", name: "Session 1" }];
     } catch {
-        return ["Session 1"];
+        return [{ id: "session-1", name: "Session 1" }];
     }
 }
 
-export function saveSessions(sessions: string[]): void {
+export function saveSessions(sessions: Session[]): void {
     localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
 }
 
 export function loadActiveSession(): string {
-    return localStorage.getItem(ACTIVE_SESSION_KEY) ?? "Session 1";
+    const active = localStorage.getItem(ACTIVE_SESSION_KEY) ?? "session-1";
+    const sessions = loadSessions();
+    // ponytail: migrate activeSession if it is still pointing to a session name
+    const found = sessions.find((s) => s.name === active || s.id === active);
+    return found ? found.id : (sessions[0]?.id ?? "session-1");
 }
 
-export function saveActiveSession(session: string): void {
-    localStorage.setItem(ACTIVE_SESSION_KEY, session);
+export function saveActiveSession(sessionId: string): void {
+    localStorage.setItem(ACTIVE_SESSION_KEY, sessionId);
 }
 
 // ─── Stats computation ────────────────────────────────────────────────────────

@@ -13,7 +13,6 @@
   flex-direction: column;
   overflow:  hidden;
   position:  relative;
-  max-height: 500px;
 
   @media (min-width: 1025px) {
     max-height: none;
@@ -21,8 +20,10 @@
 
   & .sessions-header {
     display:         flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items:     center;
+    gap: calc(var(--space-5) + 0.2rem);
     border-bottom:   2px solid var(--border);
     padding-bottom:  var(--space-3);
     margin-bottom:   var(--space-3);

@@ -1,18 +1,18 @@
 import type { LucideProps } from "lucide-react";
-import "./NavigationButton.css"
+import "./OutlineButton.css"
 
-interface NBProps {
-    activePage?: string;
-    clickFunc: () => void;
-    itemID?: string;
-    label: string;
+interface OBProps {
+    
     icon: React.ForwardRefExoticComponent<Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>>;
+    label: string;
+    clickFunc: () => void;
+    isActive?: boolean;
 }
-export default function NavigationButton({activePage, clickFunc, itemID, label, icon}: NBProps) {
+export default function OutlineButton({isActive, clickFunc, label, icon}: OBProps) {
     const Icon = icon;
     return (
         <button
-            className={`nav-btn ${activePage === itemID ? "active" : ""}`}
+            className={`nav-btn ${isActive ? "active" : ""}`}
             onClick={clickFunc}
             type="button"
         >

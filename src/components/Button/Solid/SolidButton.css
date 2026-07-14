@@ -36,7 +36,7 @@
 
   &:hover .icon {
     transform: scale(1.2);
-    color:     #f43f5e;
+    color:     var(--solid-btn-hover-icon-color, currentColor);
     animation: heartBeat 0.6s infinite alternate ease-in-out;
   }
 }
