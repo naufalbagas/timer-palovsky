@@ -1,4 +1,5 @@
-import { Heart, Sun, Moon, Clock} from "lucide-react";
+import { useEffect } from "react";
+import { Heart, Sun, Moon, Clock } from "lucide-react";
 import logo from "../../assets/logo.svg";
 import "./Sidebar.css";
 import Toggle from "../Toggle/Toggle"
@@ -19,30 +20,44 @@ interface SidebarProps {
     isCollapsed: boolean;
     setIsCollapsed: (collapsed: boolean) => void;
 }
-export default function Sidebar({theme, setThemeState, activePage, setPageState, isCollapsed, setIsCollapsed}: SidebarProps) {
+export default function Sidebar({ theme, setThemeState, activePage, setPageState, isCollapsed, setIsCollapsed }: SidebarProps) {
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 768) {
+                setIsCollapsed(true);
+            }
+        };
+        handleResize(); // run on initial mount
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, [setIsCollapsed]);
+
     return (
         <aside className={`sidebar ${isCollapsed ? "collapsed" : ""}`}>
             <div className="sidebar-container">
                 <div className="sidebar-brand">
-                    <Brand clickFunc={() => setIsCollapsed(!isCollapsed)} />
+                    <Brand clickFunc={() => {
+                        if (window.innerWidth < 768) return; // Lock toggle on mobile
+                        setIsCollapsed(!isCollapsed);
+                    }} />
                 </div>
                 <div className="sidebar-nav">
                     <NavLinks activePage={activePage} setPageState={setPageState} />
                 </div>
                 <div className="sidebar-footer">
-                    <Toggle clickFunc={() => setThemeState(theme === "light" ? "dark" : "light")} 
-                        leftIcon={Sun} 
-                        rightIcon={Moon} 
+                    <Toggle clickFunc={() => setThemeState(theme === "light" ? "dark" : "light")}
+                        leftIcon={Sun}
+                        rightIcon={Moon}
                         isLeftCondition={theme === "light"}>
                     </Toggle>
                     <div className="sidebar-cta">
-                       <SolidButton 
-                           className="btn-support" 
-                           icon={Heart} 
-                           label="Support Us!" 
-                           clickFunc={()=>{}} 
-                           hoverIconColor="#f43f5e"
-                       />
+                        <SolidButton
+                            className="btn-support"
+                            icon={Heart}
+                            label="Support Us!"
+                            clickFunc={() => { }}
+                            hoverIconColor="#f43f5e"
+                        />
                     </div>
                 </div>
             </div>
@@ -59,9 +74,9 @@ export default function Sidebar({theme, setThemeState, activePage, setPageState,
 interface BrandProps {
     clickFunc?: () => void;
 }
-function Brand({clickFunc}: BrandProps) {
+function Brand({ clickFunc }: BrandProps) {
     return (
-        <a  href="/"
+        <a href="/"
             className="brand-section"
             onClick={(e) => {
                 if (clickFunc) {
@@ -82,13 +97,13 @@ function Brand({clickFunc}: BrandProps) {
  * =================================
  */
 const NAV_ITEMS = [
-    {id: "Timer", label: "Timer", icon: Clock},
+    { id: "Timer", label: "Timer", icon: Clock },
 ];
 interface NavLinksProps {
     activePage?: string;
     setPageState?: (page: string) => void;
 }
-function NavLinks({activePage = "Home", setPageState}: NavLinksProps) {
+function NavLinks({ activePage = "Home", setPageState }: NavLinksProps) {
     return (
         /** nav -> ul -> li -> navigation button */
         <nav aria-label="Sidebar Navigation">
@@ -96,11 +111,11 @@ function NavLinks({activePage = "Home", setPageState}: NavLinksProps) {
                 {NAV_ITEMS.map((item) => {
                     return (
                         <li key={item.id}>
-                            <OutlineButton 
+                            <OutlineButton
                                 isActive={activePage === item.id}
                                 clickFunc={() => setPageState?.(item.id)}
-                                label={item.label} 
-                                icon={item.icon}/>
+                                label={item.label}
+                                icon={item.icon} />
                         </li>
                     );
                 })}
